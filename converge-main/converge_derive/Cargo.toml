@@ -1,0 +1,23 @@
+[package]
+name = "converge_derive"
+version = "0.0.5"
+authors = ["Owen Synge <osynge@googlemail.com>"]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+description = """The `converge::Converge` trait can be derived,
+`converge_derive` provides the macros that are applied to `Converge` structures.
+"""
+keywords = ["config", "converge", "merge", "derive", "configuration"]
+repository = "https://github.com/osynge/converge"
+categories = ["data-structures", "config"]
+readme = "../README.md"
+
+
+[lib]
+name = "converge_derive"
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+quote = "1.0.32"
+proc-macro2 = "1.0.66"

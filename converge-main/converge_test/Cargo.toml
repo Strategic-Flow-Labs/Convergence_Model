@@ -1,0 +1,22 @@
+[package]
+name = "converge_test"
+version = "0.0.5"
+authors = ["Owen Synge <osynge@googlemail.com>"]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+description = """Tests for the `converge::Converge` trait and the
+`converge_derive` proc-macro."""
+repository = "https://github.com/osynge/converge"
+keywords = ["config", "converge", "merge", "derive", "configuration"]
+readme = "../README.md"
+include = ["src/**/*.rs", "crates-io.md", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
+categories = ["data-structures", "config"]
+
+[lib]
+name = "converge_test"
+proc-macro = true
+
+[dependencies]
+converge = { version = "0.0.5", path = "../converge" }
+converge_derive = { version = "0.0.5", path = "../converge_derive" }
+pretty_assertions = "1"
