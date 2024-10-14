@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+  schedule:
+    - cron: "0 0 * * *"
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  test:
+
+    name: ${{ matrix.os }} python=${{ matrix.python-version }} pydantic=${{ matrix.pydantic-version }} OE=${{ matrix.openeye }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+        pydantic-version: ["1", "2"]
+        openeye: [false, true]
+        exclude:
+          - python-version: "3.12"
+            openeye: true
+
+    env:
+      OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up conda environment
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        micromamba-version: '1.5.10-0'
+        micromamba-binary-path: ~/.local/bin/micromamba
+        environment-file: devtools/conda-envs/test_env.yaml
+        create-args: >-
+          python=${{ matrix.python-version }}
+          pydantic=${{ matrix.pydantic-version }}
+
+    - name: Install OpenEye
+      if: matrix.openeye
+      run: |
+        micromamba install --yes -c openeye openeye-toolkits
+        echo "${SECRET_OE_LICENSE}" > ${OE_LICENSE}
+        python -c "from openeye import oechem; assert oechem.OEChemIsLicensed()"
+      env:
+        SECRET_OE_LICENSE: ${{ secrets.OE_LICENSE }}
+
+    - name: Install Package
+      run: |
+        python -m pip install -e .
+
+    - name: Run unit tests
+      run: |
+        pytest -v --cov=openff --cov-report=xml --color=yes openff/fragmenter/_tests/ -nlogical
+
+    - name: Run slow tests
+      run: |
+        pytest -v --cov=openff --cov-report=xml --color=yes openff/fragmenter/_tests/ -nlogical \
+          -m "fragmenter_slow"
+
+    - name: CodeCov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
